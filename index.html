@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #121212;
+            color: white;
+            user-select: none;
+        }
+
+        .music-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .player {
+            width: 350px;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+            text-align: center;
+        }
+
+        .cover {
+            width: 150px;
+            height: 150px;
+            margin: 10px auto;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.8);
+        }
+
+        .cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin: 10px 0 5px;
+        }
+
+        p {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 10px 0;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #ff00ff;
+            border-radius: 5px;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        button {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            border: none;
+            cursor: pointer;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .play-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 2em;
+            background: #ff00ff;
+            box-shadow: 0 0 15px #ff00ff;
+        }
+
+        .play-btn:hover {
+            background: #e600e6;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="music-container">
+        <h1>🎵Music Player</h1>
+        <div class="player">
+            <div class="cover">
+                <img src="cover.jpg" id="cover-img" alt="Album Cover">
+            </div>
+            <h2 id="song-title">Song Title</h2>
+            <p id="artist-name">Artist Name</p>
+            
+            <audio id="audio-player"></audio>
+
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+
+            <div class="time-info">
+                <span id="current-time">0:00</span>
+                <span id="total-time">0:00</span>
+            </div>
+
+            <div class="controls">
+                <button id="prev">⏮️</button>
+                <button id="backward">⏪</button>
+                <button id="play" class="play-btn">▶️</button>
+                <button id="forward">⏩</button>
+                <button id="next">⏭️</button>
+            </div>
+
+            <br>
+            <label>Volume: </label>
+            <input type="range" id="volume-control" min="0" max="1" step="0.1" value="1">
+        </div>
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        const playButton = document.getElementById('play');
+        const prevButton = document.getElementById('prev');
+        const nextButton = document.getElementById('next');
+        const forwardButton = document.getElementById('forward');
+        const backwardButton = document.getElementById('backward');
+        const volumeControl = document.getElementById('volume-control');
+        const songTitle = document.getElementById('song-title');
+        const artistName = document.getElementById('artist-name');
+        const coverImg = document.getElementById('cover-img');
+        const progressBar = document.querySelector('.progress-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const totalTimeEl = document.getElementById('total-time');
+
+        let songs = [
+    { 
+        title: "Soch Na Sake", 
+        artist: "Arjeet Singh", 
+        file: "song 1.mp3", 
+        cover: "https://upload.wikimedia.org/wikipedia/en/9/99/Soch_Na_Sake.jpeg"
+    },
+    { 
+        title: "Kinni Soni", 
+        artist: "Darshan Raval", 
+        file: "song 2.mp3", 
+        cover: "https://c.saavncdn.com/795/Kinni-Soni-Hindi-2024-20241010164836-500x500.jpg"
+    },
+    { 
+        title: "Bewajah", 
+        artist: "Himesh Reshammiya", 
+        file: "song 3.mp3", 
+        cover: "https://i.ytimg.com/vi/zyCUNdeoYao/maxresdefault.jpg"
+    },
+    { 
+        title: "Kya Loge Tum", 
+        artist: "B Praak", 
+        file: "song 4.mp3", 
+        cover: "https://images.genius.com/8daee94f6a9e25b52972dcb4f76ab428.500x500x1.jpg"
+    }
+];
+
+// Default cover image
+let defaultCover = "https://images.macrumors.com/t/vMbr05RQ60tz7V_zS5UEO9SbGR0=/1600x900/smart/article-new/2018/05/apple-music-note.jpg";
+
+// Loop through each song to check if cover is empty or not
+songs.forEach(song => {
+    if (!song.cover) {
+        song.cover = defaultCover;
+    }
+});
+
+console.log(songs);
+
+
+
+        let currentSongIndex = 0;
+
+        function loadSong(index) {
+            let song = songs[index];
+            audioPlayer.src = song.file;
+            songTitle.textContent = song.title;
+            artistName.textContent = song.artist;
+            coverImg.src = song.cover;
+        }
+
+        function updateProgress() {
+            let progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            let currentMinutes = Math.floor(audioPlayer.currentTime / 60);
+            let currentSeconds = Math.floor(audioPlayer.currentTime % 60);
+            currentTimeEl.textContent = `${currentMinutes}:${currentSeconds < 10 ? '0' : ''}${currentSeconds}`;
+
+            let totalMinutes = Math.floor(audioPlayer.duration / 60);
+            let totalSeconds = Math.floor(audioPlayer.duration % 60);
+            totalTimeEl.textContent = `${totalMinutes}:${totalSeconds < 10 ? '0' : ''}${totalSeconds}`;
+        }
+
+        playButton.addEventListener('click', () => {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playButton.textContent = '⏸️';
+            } else {
+                audioPlayer.pause();
+                playButton.textContent = '▶️';
+            }
+        });
+
+        prevButton.addEventListener('click', () => {
+            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+            loadSong(currentSongIndex);
+            audioPlayer.play();
+        });
+
+        nextButton.addEventListener('click', () => {
+            currentSongIndex = (currentSongIndex + 1) % songs.length;
+            loadSong(currentSongIndex);
+            audioPlayer.play();
+        });
+
+        forwardButton.addEventListener('click', () => {
+            audioPlayer.currentTime += 10;
+        });
+
+        backwardButton.addEventListener('click', () => {
+            audioPlayer.currentTime -= 10;
+        });
+
+        volumeControl.addEventListener('input', (e) => {
+            audioPlayer.volume = e.target.value;
+        });
+
+        audioPlayer.addEventListener('timeupdate', updateProgress);
+        loadSong(currentSongIndex);
+        
+
+        document.addEventListener('keydown', function(event) {
+            switch(event.code) {
+                case 'Space': // Play/Pause
+                    event.preventDefault(); // Prevent page scrolling
+                    if (audioPlayer.paused) {
+                        audioPlayer.play();
+                        playButton.textContent = '⏸️';
+                    } else {
+                        audioPlayer.pause();
+                        playButton.textContent = '▶️';
+                    }
+                    break;
+        
+                case 'ArrowRight': // Seek +10 sec
+                    audioPlayer.currentTime += 10;
+                    break;
+        
+                case 'ArrowLeft': // Seek -10 sec
+                    audioPlayer.currentTime -= 10;
+                    break;
+        
+                case 'ArrowUp': // Increase Volume
+                    if (audioPlayer.volume < 1) {
+                        audioPlayer.volume = Math.min(1, audioPlayer.volume + 0.1);
+                        volumeControl.value = audioPlayer.volume;
+                    }
+                    break;
+        
+                case 'ArrowDown': // Decrease Volume
+                    if (audioPlayer.volume > 0) {
+                        audioPlayer.volume = Math.max(0, audioPlayer.volume - 0.1);
+                        volumeControl.value = audioPlayer.volume;
+                    }
+                    break;
+        
+                case 'KeyN': // Next Song
+                    currentSongIndex = (currentSongIndex + 1) % songs.length;
+                    loadSong(currentSongIndex);
+                    audioPlayer.play();
+                    break;
+        
+                case 'KeyP': // Previous Song
+                    currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+                    loadSong(currentSongIndex);
+                    audioPlayer.play();
+                    break;
+            }
+        });
+        
+    </script>
+</body>
+</html>
